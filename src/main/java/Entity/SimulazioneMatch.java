@@ -12,9 +12,6 @@ import java.awt.*;
 public class SimulazioneMatch {
 
     private boolean avvioPartita;
-
-    private JTextArea areaCronaca;
-
     private JTextPane cronaca;
 
     private JList<String> listPlayersA;
@@ -39,12 +36,6 @@ public class SimulazioneMatch {
 
         avvioPartita = false;
 
-        //////////////////////////////
-        areaCronaca = new JTextArea();
-        areaCronaca.setLineWrap(true);
-        areaCronaca.setWrapStyleWord(true);
-        /////////////////////////////////////
-
         cronaca = new JTextPane();
 
         renderListA = new RenderListPartita();
@@ -67,12 +58,6 @@ public class SimulazioneMatch {
     public boolean isAvvioPartita() {
         return avvioPartita;
     }
-
-    public JTextArea getAreaCronaca() {
-
-        return areaCronaca;
-    }
-
     public JTextPane getCronaca() {
         return cronaca;
     }

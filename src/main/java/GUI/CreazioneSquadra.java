@@ -2,7 +2,6 @@ package GUI;
 
 import Connection.ConnessioneServerSocket;
 import Entity.InfoMatch;
-import org.json.JSONObject;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -27,33 +26,65 @@ public class CreazioneSquadra extends JFrame {
         setLocationRelativeTo(null);
         setResizable(false);
         setLayout(new BorderLayout());
+        setTitle("SPOGLIATOIO");
 
         //Inizializzazioni variabili di classe
         this.player = player;
         this.isCapitano = isCapitano;
         this.nomeSquadra = nomeSquadra;
 
+        ImageIcon sfondoIcon = new ImageIcon(getClass().getResource("/spogliatoio2.jpg"));
+        Image sfondoImage = sfondoIcon.getImage();
+
+        ImageIcon icona = new ImageIcon(getClass().getResource("/erbaCalcio.jpg"));
+        Image iconaImage = icona.getImage();
+        setIconImage(iconaImage);
+
+        // Crea un JPanel per immagine di background
+        JPanel backgroundPanel = new JPanel() {
+
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                if (sfondoImage != null) {
+                    // Disegna l'immagine di sfondo
+                    g.drawImage(sfondoImage, 0, 0, getWidth(), getHeight(), this);
+                }
+            }
+
+            @Override
+            public Dimension getPreferredSize() {
+                return new Dimension(sfondoImage.getWidth(this), sfondoImage.getHeight(this));
+            }
+        };
+
+        backgroundPanel.setLayout(new BorderLayout());
+
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         /////////////////////////////////////////////////////NORD///////////////////////////////////////////////////////////////
         JLabel nomeSquadraLabel = new JLabel();
         nomeSquadraLabel.setText(this.nomeSquadra);
-        nomeSquadraLabel.setFont(new Font("Verdana", Font.PLAIN, 18));
+        nomeSquadraLabel.setFont(new Font("Verdana", Font.BOLD, 36));
+        nomeSquadraLabel.setForeground(Color.BLACK);
         JPanel panelNomeSquadra = new JPanel(new FlowLayout(FlowLayout.CENTER));
         panelNomeSquadra.add(nomeSquadraLabel);
+        panelNomeSquadra.setBackground(new Color(255,255,255,50));
 
         ////////////////////////////////////////CENTRO/////////////////////////////////////////////////////////////////////////
 
         //PANNELLO LISTA PLAYER ACCETTATI
-        Border bordoListaPlayerAccettati = BorderFactory.createLineBorder(Color.BLACK,1);
+        Border bordoListaPlayerAccettati = BorderFactory.createLineBorder(Color.BLACK,2);
         TitledBorder titoloPlayerAccettati = new TitledBorder(bordoListaPlayerAccettati,"PLAYER PARTECIPANTI");
-        //JPanel panelListaPlayer = new JPanel();
-        //panelListaPlayer.setBorder(titoloPlayerAccettati);
-        //panelListaPlayer.setLayout(new BoxLayout(panelListaPlayer,BoxLayout.Y_AXIS));
+        titoloPlayerAccettati.setTitleFont(new Font("Verdana", Font.BOLD, 16));
+        titoloPlayerAccettati.setTitleColor(Color.WHITE);
         JList<String> listaPlayer = new JList<>();
+        listaPlayer.setCellRenderer(new RenderListPlayersAccettati());
+        listaPlayer.setOpaque(false);
         JScrollPane scrollPlayerAccettati = new JScrollPane(listaPlayer);
         scrollPlayerAccettati.setBorder(titoloPlayerAccettati);
-        //panelListaPlayer.add(scrollPlayerAccettati);
+        scrollPlayerAccettati.setOpaque(false);
+        scrollPlayerAccettati.getViewport().setOpaque(false);
 
         //GESTIONE LISTA
         DefaultListModel<String> modelListaPlayer = new DefaultListModel<>();
@@ -71,28 +102,38 @@ public class CreazioneSquadra extends JFrame {
         ///////////////////////////////////////////////EST////////////////////////////////////////////////////////////////////////
 
         //PANNELLO RICHIESTE PALYER
-        Border bordoListaRichieste = BorderFactory.createLineBorder(Color.BLACK,1);
+        Border bordoListaRichieste = BorderFactory.createLineBorder(Color.BLACK,2);
         TitledBorder titoloRichiestePlayer = new TitledBorder(bordoListaRichieste,"RICHIESTE PLAYER");
+        titoloRichiestePlayer.setTitleFont(new Font("Verdana", Font.BOLD, 16));
+        titoloRichiestePlayer.setTitleColor(Color.WHITE);
         JPanel panelRichiestePlayer = new JPanel();
         panelRichiestePlayer.setLayout(new BoxLayout(panelRichiestePlayer,BoxLayout.Y_AXIS));
         panelRichiestePlayer.setBorder(titoloRichiestePlayer);
+        panelRichiestePlayer.setOpaque(false);
+        panelRichiestePlayer.setMinimumSize(new Dimension(300,300));
+        panelRichiestePlayer.setPreferredSize(new Dimension(300,300));
 
         //PANNELLO LISTA RICHIESTE
         JList<String> listaRichieste = new JList<>();
+        listaRichieste.setCellRenderer(new RenderListRichieste());
+        listaRichieste.setOpaque(false);
         JScrollPane scrollRichiestePlayer = new JScrollPane(listaRichieste);
         DefaultListModel<String> modelListaRichieste = new DefaultListModel<>();
         listaRichieste.setModel(modelListaRichieste);
+        scrollRichiestePlayer.setOpaque(false);
+        scrollRichiestePlayer.getViewport().setOpaque(false);
 
         //PANNELLO BOTTONI GESTIONE RICHIESTE
         JPanel panelBottoni = new JPanel();
-        panelBottoni.setLayout(new FlowLayout(FlowLayout.CENTER,0,0));
+        panelBottoni.setLayout(new FlowLayout(FlowLayout.CENTER,10,20));
         JButton acceptButton = new JButton("ACCETTA PLAYER");
         JButton rejectButton = new JButton("RIFIUTA PLAYER");
+        panelBottoni.setOpaque(false);
 
         if(!isCapitano){
 
-            acceptButton.setEnabled(false);
-            rejectButton.setEnabled(false);
+            acceptButton.setVisible(false);
+            rejectButton.setVisible(false);
         }
 
         acceptButton.addActionListener(new ActionListener() {
@@ -142,13 +183,17 @@ public class CreazioneSquadra extends JFrame {
 
         ///////////////////////////////////////////////SUD////////////////////////////////////////////////////////////////////////
         JPanel panelSud = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        panelSud.setOpaque(false);
 
-        JButton btnMatch = new JButton("Cerca una squadra avversaria");
+        JButton btnMatch = new JButton("CERCA UNA SQUADRA AVVERSARIA");
         if(!isCapitano) btnMatch.setEnabled(false);
 
         InfoMatch infoMatch = new InfoMatch();
 
         panelSud.add(btnMatch);
+        JLabel labelInfoMatch = infoMatch.getStatoMatch();
+        labelInfoMatch.setFont(new Font("Arial", Font.BOLD, 16));
+        labelInfoMatch.setForeground(Color.BLACK);
         panelSud.add(infoMatch.getStatoMatch());
 
         if(isCapitano) infoMatch.getStatoMatch().setVisible(false);
@@ -182,10 +227,12 @@ public class CreazioneSquadra extends JFrame {
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         //////////////////////////////////////COSTRUZIONE FRAME///////////////////////////////////////////////////////////////////
-        add(panelNomeSquadra,BorderLayout.NORTH);
-        add(scrollPlayerAccettati, BorderLayout.CENTER);
-        add(panelRichiestePlayer,BorderLayout.EAST);
-        add(panelSud,BorderLayout.SOUTH);
+        backgroundPanel.add(panelNomeSquadra,BorderLayout.NORTH);
+        backgroundPanel.add(scrollPlayerAccettati, BorderLayout.CENTER);
+        backgroundPanel.add(panelRichiestePlayer,BorderLayout.EAST);
+        backgroundPanel.add(panelSud,BorderLayout.SOUTH);
+
+        add(backgroundPanel, BorderLayout.CENTER);
 
         setVisible(true);
 

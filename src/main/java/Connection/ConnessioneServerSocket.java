@@ -1,5 +1,6 @@
 package Connection;
 
+import Entity.InfoFineMatch;
 import Entity.InfoMatch;
 import Entity.LogPlayer;
 import Entity.SimulazioneMatch;
@@ -373,24 +374,29 @@ public class ConnessioneServerSocket {
         out.println(json.toString());
     }
 
-    public void threadAscoltoPartita(SimulazioneMatch match) throws IOException{
+    public InfoFineMatch threadAscoltoPartita(SimulazioneMatch match, InfoMatch infoMatch) throws IOException{
 
         int turno = 2;
+
+        int indiceListPlayer = -1;
+        LogPlayer[] logPlayersA = new LogPlayer[5];
+        LogPlayer[] logPlayersB = new LogPlayer[5];
+        //Inizializzazioni array
+        for(int i=0; i<5; i++){
+
+            logPlayersA[i] = new LogPlayer(match.getModelListPlayerA().getElementAt(i));
+            logPlayersB[i] = new LogPlayer(match.getModelListPlayerB().getElementAt(i));
+        }
+        boolean isSquadraA = false;
+
+        String logMatch = new String("");
+
+        InfoFineMatch infoFineMatch = null;
 
         while(true){
 
             String tipoMessaggio;
             String oggettoEvento;
-
-            int indiceListPlayer;
-            LogPlayer[] logPlayersA = new LogPlayer[5];
-            LogPlayer[] logPlayersB = new LogPlayer[5];
-            //Inizializzazioni array
-            for(int i=0; i<5; i++){
-
-                logPlayersA[i] = new LogPlayer(match.getModelListPlayerA().getElementAt(i));
-                logPlayersB[i] = new LogPlayer(match.getModelListPlayerB().getElementAt(i));
-            }
 
             synchronized (in){
 
@@ -407,17 +413,20 @@ public class ConnessioneServerSocket {
 
                     System.out.println(inizioTurno);
 
-                    //match.getAreaCronaca().append("Match avviato, 5 minuti alla fine\n");
+                    logMatch = logMatch + "Match avviato, 5 minuti alla fine\n\n";
+
                     String msg = "Match avviato, 5 minuti alla fine\n\n";
                     Font font = new Font("Verdana",Font.PLAIN,30);
-                    match.appendToPane(paneCronaca,msg,Color.GREEN,StyleConstants.ALIGN_CENTER,font);
+                    match.appendToPane(paneCronaca,msg,Color.BLACK,StyleConstants.ALIGN_CENTER,font);
                     try {
                         Thread.sleep(2000); // Pausa per 2 secondi (2000 millisecondi)
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
 
-                    //match.getAreaCronaca().append("Il primo turno è assegnato al player " + inizioTurno + "\n\n" );
+                    //Aggiornamento log Match
+                    logMatch = logMatch + "Il primo turno è assegnato al player " + inizioTurno + "\n\n";
+
                     msg = "Il primo turno è assegnato al player " + inizioTurno + "\n";
                     font = new Font("Verdana",Font.PLAIN,30);
                     match.appendToPane(paneCronaca,msg, Color.BLACK, StyleConstants.ALIGN_CENTER,font);
@@ -436,6 +445,15 @@ public class ConnessioneServerSocket {
 
                     //Indice per aggiornare i log del player
                     indiceListPlayer = LogPlayer.getIndiceListPlayer(match.getModelListPlayerA(),inizioTurno);
+                    isSquadraA = true;
+                    if(indiceListPlayer == -1){
+
+                        isSquadraA = false;
+                        indiceListPlayer = LogPlayer.getIndiceListPlayer(match.getModelListPlayerB(),inizioTurno);
+                        logPlayersB[indiceListPlayer].incrementaNumeroPossesso();
+                    }
+                    if(isSquadraA)
+                        logPlayersA[indiceListPlayer].incrementaNumeroPossesso();
                 }
 
                 if(tipoMessaggio.equals("assegnazioneTurno")){
@@ -444,7 +462,9 @@ public class ConnessioneServerSocket {
 
                     System.out.println(playerTurno);
 
-                    //match.getAreaCronaca().append("\nTurno " + turno  + " assegnato al player "  + playerTurno + "\n");
+                    //Aggiornamento log match
+                    logMatch = logMatch + "\nTurno " + turno  + " assegnato al player "  + playerTurno + "\n";
+
                     match.getCronaca().setText(""); //pulisci pane
                     String msg = "Turno " + turno  + " assegnato al player "  + playerTurno + "\n\n";
                     Font font = new Font("Verdana",Font.PLAIN,30);
@@ -458,6 +478,18 @@ public class ConnessioneServerSocket {
                     match.getListPlayersA().revalidate();
                     match.getListPlayersB().repaint();
                     match.getListPlayersB().revalidate();
+
+                    //Indice per aggiornare i log del player
+                    indiceListPlayer = LogPlayer.getIndiceListPlayer(match.getModelListPlayerA(),playerTurno);
+                    isSquadraA = true;
+                    if(indiceListPlayer == -1){
+
+                        isSquadraA = false;
+                        indiceListPlayer = LogPlayer.getIndiceListPlayer(match.getModelListPlayerB(),playerTurno);
+                        logPlayersB[indiceListPlayer].incrementaNumeroPossesso();
+                    }
+                    if(isSquadraA)
+                        logPlayersA[indiceListPlayer].incrementaNumeroPossesso();
 
                 }
 
@@ -482,7 +514,9 @@ public class ConnessioneServerSocket {
                             String esitoTiro = jsonObject.getString("esitoTiro");
                             int turnoSquadra = jsonObject.getInt("turnoSquadra");
 
-                            //match.getAreaCronaca().append("Tenta il tiro\n");
+                            //Aggiornamento log match
+                            logMatch = logMatch + "Tenta il tiro\n";
+
                             String msg = "Tenta il tiro\n\n";
                             Font font = new Font("Verdana",Font.PLAIN,35);
                             match.appendToPane(paneCronaca,msg,Color.BLACK,StyleConstants.ALIGN_CENTER,font);
@@ -492,22 +526,44 @@ public class ConnessioneServerSocket {
                                 e.printStackTrace();
                             }
 
+                            //Aggiorna Log Tiri player
+                            if(isSquadraA)
+                                logPlayersA[indiceListPlayer].incrementaNumeroTiri();
+                            else
+                                logPlayersB[indiceListPlayer].incrementaNumeroTiri();
+
                             if(!esitoTiro.equals("goal")){
 
-                                //match.getAreaCronaca().append("Il tiro non ha avuto successo\n");
+                                //Aggiornamento log match
+                                logMatch = logMatch + "Il tiro non ha avuto successo\n";
+
                                 msg = "Il tiro non ha avuto successo\n";
                                 font = new Font("Verdana",Font.PLAIN,35);
                                 match.appendToPane(paneCronaca,msg,Color.BLACK,StyleConstants.ALIGN_CENTER,font);
 
+                                //Aggiorna Log Tiri Falliti player
+                                if(isSquadraA)
+                                    logPlayersA[indiceListPlayer].incrementaNumeroTiriFalliti();
+                                else
+                                    logPlayersB[indiceListPlayer].incrementaNumeroTiriFalliti();
+
                             }else {
 
-                               //match.getAreaCronaca().append("Ed è GOOOOOOAL!\n");
+                               //aggiornamento log match
+                                logMatch = logMatch + "Ed è GOOOOOOAL!\n";
+
                                 msg = "Ed è GOOOOOOOOOAL\n";
                                 font = new Font("Verdana",Font.PLAIN,40);
                                 match.appendToPane(paneCronaca,msg,Color.RED,StyleConstants.ALIGN_CENTER,font);
 
                                 if(turnoSquadra == 0) match.incrementaScoreA();
                                 else match.incrementaScoreB();
+
+                                //Aggiorna Log Goal player
+                                if(isSquadraA)
+                                    logPlayersA[indiceListPlayer].incrementaNumeroGoal();
+                                else
+                                    logPlayersB[indiceListPlayer].incrementaNumeroGoal();
                             }
 
                             break;
@@ -516,7 +572,9 @@ public class ConnessioneServerSocket {
 
                             String esitoDribbling = jsonObject.getString("esitoDribbling");
 
-                            //match.getAreaCronaca().append("Tenta un dribbling\n");
+                            //aggiormento log match
+                            logMatch = logMatch + "Tenta un dribbling\n";
+
                             msg = "Tenta il dribbling\n\n";
                             font = new Font("Verdana",Font.PLAIN,30);
                             match.appendToPane(paneCronaca,msg,Color.BLACK,StyleConstants.ALIGN_CENTER,font);
@@ -526,19 +584,41 @@ public class ConnessioneServerSocket {
                                 e.printStackTrace();
                             }
 
+                            //Aggiorna Log Dribbling player
+                            if(isSquadraA)
+                                logPlayersA[indiceListPlayer].incrementaNumeroDribbling();
+                            else
+                                logPlayersB[indiceListPlayer].incrementaNumeroDribbling();
+
                             if(!esitoDribbling.equals("ok")){
 
-                                //match.getAreaCronaca().append("Dribbling fallito, possesso palla perso\n");
+                                //aggironamento log match
+                                logMatch = logMatch + "Dribbling fallito, possesso palla perso\n";
+
                                 msg = "Dribbling fallito, possesso palla perso\n";
                                 font = new Font("Verdana",Font.PLAIN,30);
                                 match.appendToPane(paneCronaca,msg,Color.BLACK,StyleConstants.ALIGN_CENTER,font);
 
+                                //Aggiorna Log Dribbling Falliti player
+                                if(isSquadraA)
+                                    logPlayersA[indiceListPlayer].incrementaNumeroDribblingFallito();
+                                else
+                                    logPlayersB[indiceListPlayer].incrementaNumeroDribblingFallito();
+
                             }else{
 
-                                //match.getAreaCronaca().append("Dribbling fatanstiscoo, ora ha spazio per tentare il tiro\n");
+                                //aggiornamento log match
+                                logMatch = logMatch + "Dribbling fatanstiscoo, ora ha spazio per tentare il tiro\n";
+
                                 msg = "Dribbling fatanstiscoo, ora ha spazio per tentare il tiro\n\n";
                                 font = new Font("Verdana",Font.PLAIN,30);
                                 match.appendToPane(paneCronaca,msg,Color.YELLOW,StyleConstants.ALIGN_CENTER,font);
+
+                                //Aggiorna Log Dribbling Successo player
+                                if(isSquadraA)
+                                    logPlayersA[indiceListPlayer].incrementaNumeroDribblingSuccesso();
+                                else
+                                    logPlayersB[indiceListPlayer].incrementaNumeroDribblingSuccesso();
                             }
 
                             break;
@@ -547,8 +627,9 @@ public class ConnessioneServerSocket {
 
                             int minutiInfortunio = jsonObject.getInt("minuti");
 
-                            //match.getAreaCronaca().append("Turno di " + player + "\n");
-                            //match.getAreaCronaca().append("Attenzione, il player ha subito un infortunio. Sarà indisponibile per " + minutiInfortunio + " minuti\n");
+                            //aggiornamento logMatch
+                            logMatch = logMatch + "Attenzione, il player ha subito un infortunio. Sarà indisponibile per " + minutiInfortunio + " minuti\n";
+
                             msg = "Attenzione, il player ha subito un infortunio. Sarà indisponibile per " + minutiInfortunio + " minuti\n";
                             font = new Font("Verdana",Font.PLAIN,30);
                             match.appendToPane(paneCronaca,msg,Color.BLACK,StyleConstants.ALIGN_CENTER,font);
@@ -559,11 +640,19 @@ public class ConnessioneServerSocket {
                             match.getListPlayersB().repaint();
                             match.getListPlayersB().revalidate();
 
+                            //Aggiorna Log minuti infortunio player
+                            if(isSquadraA)
+                                logPlayersA[indiceListPlayer].setMinutiInfortunati(minutiInfortunio);
+                            else
+                                logPlayersB[indiceListPlayer].setMinutiInfortunati(minutiInfortunio);
+
                             break;
 
                         case "ritornoInfortunio":
 
-                            //match.getAreaCronaca().append("Il player " + player + " torna ad essere disponibile\n");
+                            //aggiornamento log match
+                            logMatch = logMatch + "Il player " + player + " torna ad essere disponibile\n";
+
                             msg = "Il player" +  player + " torna ad essere disponibile\n";
                             font = new Font("Verdana",Font.PLAIN,20);
                             match.appendToPane(paneCronaca,msg,Color.BLACK,StyleConstants.ALIGN_CENTER,font);
@@ -575,6 +664,55 @@ public class ConnessioneServerSocket {
 
                             break;
                     }
+                }
+
+                if(tipoMessaggio.equals("fineMatch")){
+
+                    match.getCronaca().setText(""); //pulisci pane
+                    String msg = "MATCH CONCLUSO\n";
+                    Font font = new Font("Verdana",Font.PLAIN,30);
+                    match.appendToPane(paneCronaca,msg, Color.BLACK, StyleConstants.ALIGN_CENTER,font);
+
+                    String logStatistiche = new String("");
+
+                    logStatistiche = logStatistiche + "--------------------" + infoMatch.getSquadraA() + "--------------------\n";
+
+                    for(LogPlayer logPlayer : logPlayersA){
+
+                        logStatistiche = logStatistiche + "PLAYER: " + logPlayer.getPlayer() + "\n";
+                        logStatistiche = logStatistiche + "NUMERO DI TURNI GIOCATI: " + logPlayer.getNumeroDiPossesso() + "\n";
+                        logStatistiche = logStatistiche + "NUMERO TIRI: " + logPlayer.getNumeroTiri() + "\n";
+                        logStatistiche = logStatistiche + "TIRI FALLITI: " + logPlayer.getNumeroTiriFalliti() + "\n";
+                        logStatistiche = logStatistiche + "GOAL: " + logPlayer.getNumeroGoal() + "\n";
+                        logStatistiche = logStatistiche + "TENTATIVI DRIBBLING: " + logPlayer.getNumeroDribbling() + "\n";
+                        logStatistiche = logStatistiche + "DRIBBLING RIUSCITI: " + logPlayer.getNumeroDribblingSuccesso() + "\n";
+                        logStatistiche = logStatistiche + "DRIBBLING FALLITI: " + logPlayer.getNumeroDribblingFalliti() + "\n";
+                        logStatistiche = logStatistiche + "MINUTI INFORTUNATI: " + logPlayer.getMinutiInfortunati() + "\n";
+
+                        logStatistiche = logStatistiche + "--------------------\n";
+                    }
+
+                    logStatistiche = logStatistiche + "--------------------" + infoMatch.getSquadraB() + "--------------------\n";
+
+                    for(LogPlayer logPlayer : logPlayersB){
+
+                        logStatistiche = logStatistiche + "PLAYER: " + logPlayer.getPlayer() + "\n";
+                        logStatistiche = logStatistiche + "NUMERO DI TURNI GIOCATI: " + logPlayer.getNumeroDiPossesso() + "\n";
+                        logStatistiche = logStatistiche + "NUMERO TIRI: " + logPlayer.getNumeroTiri() + "\n";
+                        logStatistiche = logStatistiche + "TIRI FALLITI: " + logPlayer.getNumeroTiriFalliti() + "\n";
+                        logStatistiche = logStatistiche + "GOAL: " + logPlayer.getNumeroGoal() + "\n";
+                        logStatistiche = logStatistiche + "TENTATIVI DRIBBLING: " + logPlayer.getNumeroDribbling() + "\n";
+                        logStatistiche = logStatistiche + "DRIBBLING RIUSCITI: " + logPlayer.getNumeroDribblingSuccesso() + "\n";
+                        logStatistiche = logStatistiche + "DRIBBLING FALLITI: " + logPlayer.getNumeroDribblingFalliti() + "\n";
+                        logStatistiche = logStatistiche + "MINUTI INFORTUNATI: " + logPlayer.getMinutiInfortunati() + "\n";
+
+                        logStatistiche = logStatistiche + "--------------------\n";
+
+                        infoFineMatch = new InfoFineMatch(logMatch,logStatistiche);
+
+                    }
+
+                    return infoFineMatch;
                 }
             }
         }
