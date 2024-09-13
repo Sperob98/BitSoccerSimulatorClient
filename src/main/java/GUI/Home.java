@@ -125,13 +125,14 @@ public class Home extends JFrame {
         rigaLabelSquadra.setOpaque(false);
         JLabel nomeSquadraLabel = new JLabel(" INSERISCI NOME SQUADRA:");
         nomeSquadraLabel.setForeground(Color.WHITE);
-        nomeSquadraLabel.setFont(new Font("Verdana", Font.PLAIN, 10));
+        nomeSquadraLabel.setFont(new Font("Verdana", Font.PLAIN, 20));
         rigaLabelSquadra.add(nomeSquadraLabel);
 
         ////SECONDA RIGA ALL'INTERNO DEL PANNELLO CREAZIONE SQUADRA
         JPanel rigaInputSquadra = new JPanel(new FlowLayout());
         rigaInputSquadra.setOpaque(false);
         JTextField nomeSquadraInput = new JTextField(15);
+        nomeSquadraInput.setFont(new Font("Verdana", Font.PLAIN, 18));
         nomeSquadraInput.setForeground(Color.WHITE);
         nomeSquadraInput.setOpaque(false);
         rigaInputSquadra.add(nomeSquadraInput);
@@ -171,7 +172,7 @@ public class Home extends JFrame {
         JPanel panelParteciazioneSquadra = new JPanel();
         panelParteciazioneSquadra.setLayout(new FlowLayout(FlowLayout.CENTER,10,10));
         panelParteciazioneSquadra.setOpaque(false);
-        JButton bottoneDiPartecipazione = new JButton("Partecipa alla squadra selezionata");
+        JButton bottoneDiPartecipazione = new JButton("PARTECIPA ALLA SQUADRA SELEZIONATA");
 
         bottoneDiPartecipazione.addActionListener(new ActionListener() {
             @Override

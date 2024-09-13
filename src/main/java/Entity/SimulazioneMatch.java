@@ -28,6 +28,8 @@ public class SimulazioneMatch {
 
     private JLabel scoreB;
 
+    private JLabel time;
+
     private int countA = 0;
     private int countB = 0;
 
@@ -37,6 +39,7 @@ public class SimulazioneMatch {
         avvioPartita = false;
 
         cronaca = new JTextPane();
+        cronaca.setEditable(false);
 
         renderListA = new RenderListPartita();
         renderListB = new RenderListPartita();
@@ -53,6 +56,8 @@ public class SimulazioneMatch {
 
         scoreA = new JLabel("0");
         scoreB = new JLabel("0");
+
+        time = new JLabel();
     }
 
     public boolean isAvvioPartita() {
@@ -86,6 +91,10 @@ public class SimulazioneMatch {
         return scoreB;
     }
 
+    public JLabel getTime() {
+        return time;
+    }
+
     public void setAvvioPartita(boolean avvioPartita) {
         this.avvioPartita = avvioPartita;
     }
@@ -97,13 +106,6 @@ public class SimulazioneMatch {
         renderListB.setTurnoPlayer(player);
     }
 
-    public void setPlayerInfortunato(String player){
-
-        renderListA.setPlayerInfortunato(player);
-
-        renderListB.setPlayerInfortunato(player);
-    }
-
     public void setPlayerClient(String player){
 
         renderListA.setPlayerClient(player);
@@ -111,20 +113,34 @@ public class SimulazioneMatch {
         renderListB.setPlayerClient(player);
     }
 
+    public void addInfortunio(String player){
+
+        renderListA.addPlayerInfortunato(player);
+
+        renderListB.addPlayerInfortunato(player);
+    }
+
+    public void removeInfortunio(String player){
+
+        renderListA.removePlayerInfortunato(player);
+
+        renderListB.removePlayerInfortunato(player);
+    }
+
     public void incrementaScoreA(){
 
         countA++;
         scoreA.setText(String.valueOf(countA));
 
-        scoreA.setFont(new Font("Verdana",Font.PLAIN,24));
+        scoreA.setFont(new Font("Verdana",Font.PLAIN,28));
         scoreA.setForeground(Color.red);
         try {
-            Thread.sleep(2000); // Pausa per 2 secondi (2000 millisecondi)
+            Thread.sleep(3000); // Pausa per 2 secondi (2000 millisecondi)
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        scoreA.setFont(new Font("Verdana",Font.PLAIN,18));
-        scoreA.setForeground(Color.BLACK);
+        scoreA.setFont(new Font("Verdana",Font.PLAIN,20));
+        scoreA.setForeground(Color.WHITE);
     }
 
     public void incrementaScoreB(){
@@ -132,15 +148,15 @@ public class SimulazioneMatch {
         countB++;
         scoreB.setText(String.valueOf(countB));
 
-        scoreB.setFont(new Font("Verdana",Font.PLAIN,24));
+        scoreB.setFont(new Font("Verdana",Font.PLAIN,30));
         scoreB.setForeground(Color.red);
         try {
-            Thread.sleep(2000); // Pausa per 2 secondi (2000 millisecondi)
+            Thread.sleep(3000); // Pausa per 2 secondi (2000 millisecondi)
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        scoreB.setFont(new Font("Verdana",Font.PLAIN,18));
-        scoreB.setForeground(Color.BLACK);
+        scoreB.setFont(new Font("Verdana",Font.PLAIN,20));
+        scoreB.setForeground(Color.WHITE);
     }
 
     public void appendToPane(JTextPane textPane, String msg, Color color, int alignment, Font font){

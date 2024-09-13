@@ -2,6 +2,7 @@ package GUI;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
 
 public class RenderListPartita extends JLabel implements ListCellRenderer<String> {
 
@@ -9,7 +10,7 @@ public class RenderListPartita extends JLabel implements ListCellRenderer<String
 
     private String playerClient;
 
-    private String playerInfortunato;
+    private ArrayList<String> playerInfortunato = new ArrayList<>();
 
     public RenderListPartita(){
 
@@ -26,10 +27,10 @@ public class RenderListPartita extends JLabel implements ListCellRenderer<String
         setFont(new Font("Arial", Font.PLAIN, 18));
 
         // Controlla se l'elemento è il giocatore di turno e cambia il colore di sfondo
-        if ( (value.equals(turnoPlayer)) || (value.contains(" (capitano)") && value.equals(turnoPlayer + (" (capitano)"))) ) {
+        if ( (value.equals(turnoPlayer)) || (value.equals(turnoPlayer + (" (capitano)"))) ) {
             setBackground(Color.GREEN);  // Colore di sfondo per il giocatore di turno
             setForeground(Color.BLACK);   // Colore del testo per il giocatore di turno
-        } else if( (value.equals(playerClient)) || (value.contains(" (capitano)") && value.equals(playerClient + " (capitano)")) ) {
+        } else if( (value.equals(playerClient)) || (value.equals(playerClient + " (capitano)")) ) {
             setBackground(Color.gray);   // Colore di sfondo del player client
             setForeground(Color.BLACK);   // Colore del testo player client
         } else{
@@ -37,7 +38,7 @@ public class RenderListPartita extends JLabel implements ListCellRenderer<String
             setForeground(Color.BLACK);   // Colore del testo normale
         }
 
-        if( (value.equals(playerInfortunato)) || (value.contains(" (capitano)") && value.equals(playerInfortunato + ( "capitano"))) ){
+        if( (playerInfortunato.contains(value)) || (playerInfortunato.contains(value + " (capitano)")) ){
             setBackground(Color.RED);   // Colore di sfondo del player infortunato
             setForeground(Color.BLACK);   // Colore del testo player infortunato
         }
@@ -54,7 +55,13 @@ public class RenderListPartita extends JLabel implements ListCellRenderer<String
         this.playerClient = playerClient;
     }
 
-    public void setPlayerInfortunato(String playerInfortunato) {
-        this.playerInfortunato = playerInfortunato;
+    public void addPlayerInfortunato(String playerInfortunato) {
+
+        this.playerInfortunato.add(playerInfortunato);
+    }
+
+    public void removePlayerInfortunato(String playerInfortunato){
+
+        this.playerInfortunato.remove(playerInfortunato);
     }
 }

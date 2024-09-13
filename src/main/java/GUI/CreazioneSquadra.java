@@ -110,8 +110,8 @@ public class CreazioneSquadra extends JFrame {
         panelRichiestePlayer.setLayout(new BoxLayout(panelRichiestePlayer,BoxLayout.Y_AXIS));
         panelRichiestePlayer.setBorder(titoloRichiestePlayer);
         panelRichiestePlayer.setOpaque(false);
-        panelRichiestePlayer.setMinimumSize(new Dimension(300,300));
-        panelRichiestePlayer.setPreferredSize(new Dimension(300,300));
+        panelRichiestePlayer.setMinimumSize(new Dimension(330,300));
+        panelRichiestePlayer.setPreferredSize(new Dimension(330,300));
 
         //PANNELLO LISTA RICHIESTE
         JList<String> listaRichieste = new JList<>();

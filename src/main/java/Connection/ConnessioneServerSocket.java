@@ -418,8 +418,9 @@ public class ConnessioneServerSocket {
                     String msg = "Match avviato, 5 minuti alla fine\n\n";
                     Font font = new Font("Verdana",Font.PLAIN,30);
                     match.appendToPane(paneCronaca,msg,Color.BLACK,StyleConstants.ALIGN_CENTER,font);
+                    match.getTime().setText("5 min");
                     try {
-                        Thread.sleep(2000); // Pausa per 2 secondi (2000 millisecondi)
+                        Thread.sleep(4000); // Pausa per 4 secondi
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -427,14 +428,9 @@ public class ConnessioneServerSocket {
                     //Aggiornamento log Match
                     logMatch = logMatch + "Il primo turno è assegnato al player " + inizioTurno + "\n\n";
 
-                    msg = "Il primo turno è assegnato al player " + inizioTurno + "\n";
+                    msg = "Il primo turno è assegnato al player " + inizioTurno + "\n\n";
                     font = new Font("Verdana",Font.PLAIN,30);
-                    match.appendToPane(paneCronaca,msg, Color.BLACK, StyleConstants.ALIGN_CENTER,font);
-                    try {
-                        Thread.sleep(4000); // Pausa per 4 secondi (2000 millisecondi)
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
+                    match.appendToPane(paneCronaca,msg, Color.GREEN, StyleConstants.ALIGN_CENTER,font);
 
                     //Aggiorna graficamente il player corrente
                     match.setPlayerAttualeRender(inizioTurno);
@@ -518,10 +514,10 @@ public class ConnessioneServerSocket {
                             logMatch = logMatch + "Tenta il tiro\n";
 
                             String msg = "Tenta il tiro\n\n";
-                            Font font = new Font("Verdana",Font.PLAIN,35);
+                            Font font = new Font("Verdana",Font.PLAIN,25);
                             match.appendToPane(paneCronaca,msg,Color.BLACK,StyleConstants.ALIGN_CENTER,font);
                             try {
-                                Thread.sleep(4000); // Pausa per 2 secondi (2000 millisecondi)
+                                Thread.sleep(3000); // Pausa per 3 secondi
                             } catch (InterruptedException e) {
                                 e.printStackTrace();
                             }
@@ -538,8 +534,13 @@ public class ConnessioneServerSocket {
                                 logMatch = logMatch + "Il tiro non ha avuto successo\n";
 
                                 msg = "Il tiro non ha avuto successo\n";
-                                font = new Font("Verdana",Font.PLAIN,35);
+                                font = new Font("Verdana",Font.PLAIN,25);
                                 match.appendToPane(paneCronaca,msg,Color.BLACK,StyleConstants.ALIGN_CENTER,font);
+                                try {
+                                    Thread.sleep(2000); // Pausa per 2 secondi
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
 
                                 //Aggiorna Log Tiri Falliti player
                                 if(isSquadraA)
@@ -552,9 +553,14 @@ public class ConnessioneServerSocket {
                                //aggiornamento log match
                                 logMatch = logMatch + "Ed è GOOOOOOAL!\n";
 
-                                msg = "Ed è GOOOOOOOOOAL\n";
-                                font = new Font("Verdana",Font.PLAIN,40);
+                                msg = "GOOOOOOOOOOOOOOOOOAL\n";
+                                font = new Font("Verdana",Font.PLAIN,35);
                                 match.appendToPane(paneCronaca,msg,Color.RED,StyleConstants.ALIGN_CENTER,font);
+                                try {
+                                    Thread.sleep(2000); // Pausa per 2 secondi
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
 
                                 if(turnoSquadra == 0) match.incrementaScoreA();
                                 else match.incrementaScoreB();
@@ -576,10 +582,10 @@ public class ConnessioneServerSocket {
                             logMatch = logMatch + "Tenta un dribbling\n";
 
                             msg = "Tenta il dribbling\n\n";
-                            font = new Font("Verdana",Font.PLAIN,30);
+                            font = new Font("Verdana",Font.PLAIN,25);
                             match.appendToPane(paneCronaca,msg,Color.BLACK,StyleConstants.ALIGN_CENTER,font);
                             try {
-                                Thread.sleep(4000); // Pausa per 2 secondi (2000 millisecondi)
+                                Thread.sleep(3000); // Pausa per 3 secondi
                             } catch (InterruptedException e) {
                                 e.printStackTrace();
                             }
@@ -598,6 +604,11 @@ public class ConnessioneServerSocket {
                                 msg = "Dribbling fallito, possesso palla perso\n";
                                 font = new Font("Verdana",Font.PLAIN,30);
                                 match.appendToPane(paneCronaca,msg,Color.BLACK,StyleConstants.ALIGN_CENTER,font);
+                                try {
+                                    Thread.sleep(2000); // Pausa per 2 secondi
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
 
                                 //Aggiorna Log Dribbling Falliti player
                                 if(isSquadraA)
@@ -613,6 +624,11 @@ public class ConnessioneServerSocket {
                                 msg = "Dribbling fatanstiscoo, ora ha spazio per tentare il tiro\n\n";
                                 font = new Font("Verdana",Font.PLAIN,30);
                                 match.appendToPane(paneCronaca,msg,Color.YELLOW,StyleConstants.ALIGN_CENTER,font);
+                                try {
+                                    Thread.sleep(2000); // Pausa per 2 secondi
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
 
                                 //Aggiorna Log Dribbling Successo player
                                 if(isSquadraA)
@@ -626,15 +642,28 @@ public class ConnessioneServerSocket {
                         case "infortunio":
 
                             int minutiInfortunio = jsonObject.getInt("minuti");
+                            int minutiPlayerPenalizzato = jsonObject.getInt("minutiP");
+                            String playerPenalizzato = jsonObject.getString("playerPenalizzato");
 
                             //aggiornamento logMatch
+                            logMatch = logMatch + "Fallo da parte del player " + playerPenalizzato + "\n";
                             logMatch = logMatch + "Attenzione, il player ha subito un infortunio. Sarà indisponibile per " + minutiInfortunio + " minuti\n";
+                            logMatch = logMatch + "il player  " + playerPenalizzato + "è stato penalizzato per " + minutiPlayerPenalizzato + "\n";
 
-                            msg = "Attenzione, il player ha subito un infortunio. Sarà indisponibile per " + minutiInfortunio + " minuti\n";
-                            font = new Font("Verdana",Font.PLAIN,30);
+                            msg = "Attenzione, il player ha subito un infortunio per un fallo commesso da " + playerPenalizzato + " Sarà indisponibile per " + minutiInfortunio + " minuti\n\n";
+                            font = new Font("Verdana",Font.PLAIN,20);
                             match.appendToPane(paneCronaca,msg,Color.BLACK,StyleConstants.ALIGN_CENTER,font);
+                            msg = "L'arbitro dà " + minutiPlayerPenalizzato + " minuti di penalizzazione al player " + playerPenalizzato + " per il fallo commesso\n";
+                            font = new Font("Verdana",Font.PLAIN,20);
+                            match.appendToPane(paneCronaca,msg,Color.BLACK,StyleConstants.ALIGN_CENTER,font);
+                            try {
+                                Thread.sleep(5000); // Pausa per 5 secondi
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
 
-                            match.setPlayerInfortunato(player);
+                            match.addInfortunio(player);
+                            match.addInfortunio(playerPenalizzato);
                             match.getListPlayersA().repaint();
                             match.getListPlayersA().revalidate();
                             match.getListPlayersB().repaint();
@@ -653,15 +682,99 @@ public class ConnessioneServerSocket {
                             //aggiornamento log match
                             logMatch = logMatch + "Il player " + player + " torna ad essere disponibile\n";
 
-                            msg = "Il player" +  player + " torna ad essere disponibile\n";
+                            msg = "\nIl player " +  player + " torna ad essere disponibile\n";
+                            try {
+                                Thread.sleep(2000); // Pausa per 2 secondi
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
                             font = new Font("Verdana",Font.PLAIN,20);
                             match.appendToPane(paneCronaca,msg,Color.BLACK,StyleConstants.ALIGN_CENTER,font);
-                            match.setPlayerInfortunato("null");
+                            match.removeInfortunio(player);
                             match.getListPlayersA().repaint();
                             match.getListPlayersA().revalidate();
                             match.getListPlayersB().repaint();
                             match.getListPlayersB().revalidate();
 
+                            break;
+                    }
+                }
+
+                if(tipoMessaggio.equals("ritornoPenalizzazione")){
+
+                    String msg;
+                    String player = in.readLine();
+                    Font font;
+
+                    //aggiornamento log match
+                    logMatch = logMatch + "Il player " + player + " torna ad essere disponibile\n";
+
+                    msg = "\nIl player " +  player + " ha scontato la penalizzazione\n";
+                    font = new Font("Verdana",Font.PLAIN,20);
+                    match.appendToPane(paneCronaca,msg,Color.BLACK,StyleConstants.ALIGN_CENTER,font);
+                    try {
+                        Thread.sleep(2000); // Pausa per 2 secondi
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+
+
+                    match.removeInfortunio(player);
+                    match.getListPlayersA().repaint();
+                    match.getListPlayersA().revalidate();
+                    match.getListPlayersB().repaint();
+                    match.getListPlayersB().revalidate();
+                }
+
+                if(tipoMessaggio.equals("refreshTime")){
+
+                    String nuovoTime = in.readLine();
+
+                    System.out.println(nuovoTime);
+
+                    switch (nuovoTime){
+
+                        case "4m":
+                            match.getTime().setText("4 min");
+                            match.getTime().setForeground(Color.red);
+                            try {
+                                Thread.sleep(3000); // Pausa per 3 secondi (2000 millisecondi)
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                            match.getTime().setForeground(Color.WHITE);
+                            break;
+
+                        case "3m":
+                            match.getTime().setText("3 min");
+                            match.getTime().setForeground(Color.red);
+                            try {
+                                Thread.sleep(3000); // Pausa per 3 secondi (2000 millisecondi)
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                            match.getTime().setForeground(Color.WHITE);
+                            break;
+
+                        case "2m":
+                            match.getTime().setText("2 min");
+                            match.getTime().setForeground(Color.red);
+                            try {
+                                Thread.sleep(3000); // Pausa per 4 secondi (2000 millisecondi)
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                            match.getTime().setForeground(Color.WHITE);
+                            break;
+
+                        case "1m":
+                            match.getTime().setText("1 min");
+                            match.getTime().setForeground(Color.red);
+                            try {
+                                Thread.sleep(3000); // Pausa per 4 secondi (2000 millisecondi)
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
                             break;
                     }
                 }
