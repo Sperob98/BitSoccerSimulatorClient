@@ -263,7 +263,8 @@ public class Partita extends JFrame {
         panelMappaColori.add(rigaColore3);
 
         JLabel colore1 = new JLabel();
-        colore1.setBackground(Color.darkGray);
+        colore1.setBackground(Color.DARK_GRAY);
+        colore1.setBorder(BorderFactory.createLineBorder(Color.DARK_GRAY,2));
         colore1.setMinimumSize(new Dimension(10,10));
         colore1.setMaximumSize(new Dimension(10,10));
         colore1.setPreferredSize(new Dimension(10,10));
@@ -276,6 +277,7 @@ public class Partita extends JFrame {
 
         JLabel colore2 = new JLabel();
         colore2.setBackground(Color.GREEN);
+        colore2.setBorder(BorderFactory.createLineBorder(Color.GREEN,2));
         colore2.setMinimumSize(new Dimension(10,10));
         colore2.setMaximumSize(new Dimension(10,10));
         colore2.setPreferredSize(new Dimension(10,10));
@@ -288,11 +290,12 @@ public class Partita extends JFrame {
 
         JLabel colore3 = new JLabel();
         colore3.setBackground(Color.RED);
+        colore3.setBorder(BorderFactory.createLineBorder(Color.RED,2));
         colore3.setMinimumSize(new Dimension(10,10));
         colore3.setMaximumSize(new Dimension(10,10));
         colore3.setPreferredSize(new Dimension(10,10));
         colore3.setOpaque(true);
-        JLabel infortunatoPlayer = new JLabel("Player infortunato");
+        JLabel infortunatoPlayer = new JLabel("Player infortunato/penalizzato");
         infortunatoPlayer.setFont(new Font("Arial", Font.PLAIN, 14));
         infortunatoPlayer.setForeground(Color.RED);
         rigaColore3.add(colore3);

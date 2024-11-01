@@ -16,7 +16,7 @@ public class Main {
         Thread tentativoDiConnessione = new Thread( ()->{
 
             try{
-                server.startConnection("192.168.1.86",8080);
+                server.startConnection("192.168.247.160",8080);
 
             }catch (IOException ex){
                 JOptionPane.showMessageDialog(null,"Connessione al server fallita", "Errore", JOptionPane.ERROR_MESSAGE);

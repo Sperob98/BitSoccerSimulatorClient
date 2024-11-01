@@ -10,7 +10,9 @@ public class RenderListPartita extends JLabel implements ListCellRenderer<String
 
     private String playerClient;
 
-    private ArrayList<String> playerInfortunato = new ArrayList<>();
+    private ArrayList<String> playersInfortunato = new ArrayList<>();
+
+    private ArrayList<String> playersPenalizzato = new ArrayList<>();
 
     public RenderListPartita(){
 
@@ -38,7 +40,7 @@ public class RenderListPartita extends JLabel implements ListCellRenderer<String
             setForeground(Color.BLACK);   // Colore del testo normale
         }
 
-        if( (playerInfortunato.contains(value)) || (playerInfortunato.contains(value + " (capitano)")) ){
+        if( (playersInfortunato.contains(value)) || (contieneCapitano(playersInfortunato,value)) ){
             setBackground(Color.RED);   // Colore di sfondo del player infortunato
             setForeground(Color.BLACK);   // Colore del testo player infortunato
         }
@@ -57,11 +59,33 @@ public class RenderListPartita extends JLabel implements ListCellRenderer<String
 
     public void addPlayerInfortunato(String playerInfortunato) {
 
-        this.playerInfortunato.add(playerInfortunato);
+        this.playersInfortunato.add(playerInfortunato);
     }
 
     public void removePlayerInfortunato(String playerInfortunato){
 
-        this.playerInfortunato.remove(playerInfortunato);
+        this.playersInfortunato.remove(playerInfortunato);
+    }
+
+    public void addPlayerPenalizzato(String playerPenalizzato){
+
+        this.playersPenalizzato.add(playerPenalizzato);
+    }
+
+    public void removePlayerPenalizzato(String playerPenalizzato){
+
+        this.playersPenalizzato.remove(playerPenalizzato);
+    }
+
+    private boolean contieneCapitano(ArrayList<String> list, String value){
+
+        if(value.contains(" (capitano)")){
+
+            int index = value.indexOf(" (capitano)");
+            String player = value.substring(0,index).trim();
+            if(list.contains(player)) return true;
+        }
+
+        return false;
     }
 }
