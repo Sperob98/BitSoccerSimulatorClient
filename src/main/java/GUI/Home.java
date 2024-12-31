@@ -26,7 +26,7 @@ public class Home extends JFrame {
         setLocationRelativeTo(null);
         setResizable(false);
         setLayout(new BorderLayout());
-        setTitle("Home");
+        setTitle("Home: " + username);
 
         ImageIcon sfondoIcon = new ImageIcon(getClass().getResource("/erbaCalcio.jpg"));
         Image sfondoImage = sfondoIcon.getImage();
@@ -149,13 +149,19 @@ public class Home extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
 
-                String response;
-                response = server.sendNewSquadra(nomeSquadraInput.getText().toUpperCase(),player);
-                if(response.equals("ok")) {
-                    new CreazioneSquadra(server, player, nomeSquadraInput.getText().toUpperCase(), true);
-                    dispose();
-                } else if(response.equals("busy")) JOptionPane.showMessageDialog(null,"Nome squadra già in uso, cambiare nome!");
-                else JOptionPane.showMessageDialog(null,"Limite massimo di creazione squadre raggiunto, riprovare più tardi!");
+                if(nomeSquadraInput.getText().length()<=120){
+
+                    String response;
+                    response = server.sendNewSquadra(nomeSquadraInput.getText().toUpperCase()+'\0',player);
+                    if(response.equals("ok")) {
+                        new CreazioneSquadra(server, player, nomeSquadraInput.getText().toUpperCase(), true);
+                        dispose();
+                    } else if(response.equals("busy")) JOptionPane.showMessageDialog(null,"Nome squadra già in uso, cambiare nome!");
+                    else JOptionPane.showMessageDialog(null,"Limite massimo di creazione squadre raggiunto, riprovare più tardi!");
+                }else{
+
+                    JOptionPane.showMessageDialog(null,"Nome squadra troppo lungo");
+                }
             }
         });
 

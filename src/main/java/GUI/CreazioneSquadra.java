@@ -26,7 +26,7 @@ public class CreazioneSquadra extends JFrame {
         setLocationRelativeTo(null);
         setResizable(false);
         setLayout(new BorderLayout());
-        setTitle("SPOGLIATOIO");
+        setTitle("SPOGLIATOIO: " + player);
 
         //Inizializzazioni variabili di classe
         this.player = player;
@@ -243,7 +243,7 @@ public class CreazioneSquadra extends JFrame {
             server.setBreakUpdateSquadre(true);
             try {
 
-                int stato = server.updateSpogliatoio(modelListaPlayer,modelListaRichieste,infoMatch);
+                int stato = server.updateSpogliatoio(modelListaPlayer,modelListaRichieste,infoMatch,btnMatch,isCapitano);
 
                 switch (stato){
 

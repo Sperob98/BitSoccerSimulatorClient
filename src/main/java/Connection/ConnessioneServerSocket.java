@@ -5,6 +5,7 @@ import Entity.InfoMatch;
 import Entity.LogPlayer;
 import Entity.SimulazioneMatch;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONString;
 
@@ -14,6 +15,8 @@ import javax.swing.text.StyleConstants;
 import java.awt.*;
 import java.io.*;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ConnessioneServerSocket {
     private Socket clientSocket;
@@ -212,7 +215,7 @@ public class ConnessioneServerSocket {
         return response;
     }
 
-    public int updateSpogliatoio(DefaultListModel<String> listaPlayers, DefaultListModel<String> listaRichieste, InfoMatch infoMatch) throws IOException{
+    public int updateSpogliatoio(DefaultListModel<String> listaPlayers, DefaultListModel<String> listaRichieste, InfoMatch infoMatch,JButton btnMatch,boolean isCapitano) throws IOException{
 
         String tipoMessaggio;
         String line;
@@ -326,7 +329,17 @@ public class ConnessioneServerSocket {
                         }else if(response.equals("attesaMatch")){
 
                             infoMatch.setStatoMatch("Match avviato, in attesa di trovare una squadra avversaria");
+
                         }
+                    }
+                }else if(tipoMessaggio.equals("squadraNonPronta")){
+
+                    infoMatch.setStatoMatch("Formazione squadra in corso");
+
+                    if(isCapitano){
+
+                        infoMatch.getStatoMatch().setVisible(false);
+                        btnMatch.setVisible(true);
                     }
                 }
             }
@@ -377,10 +390,11 @@ public class ConnessioneServerSocket {
     public InfoFineMatch threadAscoltoPartita(SimulazioneMatch match, InfoMatch infoMatch) throws IOException{
 
         int turno = 2;
-
         int indiceListPlayer = -1;
         LogPlayer[] logPlayersA = new LogPlayer[5];
         LogPlayer[] logPlayersB = new LogPlayer[5];
+        List<String> ritorniInfortunio = new ArrayList<>();
+        List<String> ritorniPenalizzazione = new ArrayList<>();
         //Inizializzazioni array
         for(int i=0; i<5; i++){
 
@@ -395,346 +409,393 @@ public class ConnessioneServerSocket {
 
         while(true){
 
-            String tipoMessaggio;
             String oggettoEvento;
 
             synchronized (in){
 
-                tipoMessaggio = in.readLine();
-                System.out.println(tipoMessaggio);
-
                 JTextPane paneCronaca = match.getCronaca();
 
-                if(tipoMessaggio.equals("inizioMatch")){
+                //Deserializzazione oggettoJSON
+                StringBuilder jsonBuilder = new StringBuilder();
+                oggettoEvento = in.readLine();
+                jsonBuilder.append(oggettoEvento);
+                String jsonResponse = jsonBuilder.toString();
+                System.out.println("oggetto ricevuto: " + jsonResponse);
+                JSONObject jsonObject;
+                String tipoEvento;
+                try{
+                     jsonObject = new JSONObject(jsonResponse);
+                }catch (JSONException ex){
 
-                    match.setAvvioPartita(true);
-
-                    String inizioTurno = in.readLine();
-
-                    System.out.println(inizioTurno);
-
-                    logMatch = logMatch + "Match avviato, 5 minuti alla fine\n\n";
-
-                    String msg = "Match avviato, 5 minuti alla fine\n\n";
-                    Font font = new Font("Verdana",Font.PLAIN,30);
-                    match.appendToPane(paneCronaca,msg,Color.BLACK,StyleConstants.ALIGN_CENTER,font);
-                    match.getTime().setText("5 min");
-                    try {
-                        Thread.sleep(4000); // Pausa per 4 secondi
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-
-                    //Aggiornamento log Match
-                    logMatch = logMatch + "Il primo turno è assegnato al player " + inizioTurno + "\n\n";
-
-                    msg = "Il primo turno è assegnato al player " + inizioTurno + "\n\n";
-                    font = new Font("Verdana",Font.PLAIN,30);
-                    match.appendToPane(paneCronaca,msg, Color.GREEN, StyleConstants.ALIGN_CENTER,font);
-
-                    //Aggiorna graficamente il player corrente
-                    match.setPlayerAttualeRender(inizioTurno);
-                    match.getListPlayersA().repaint();
-                    match.getListPlayersA().revalidate();
-                    match.getListPlayersB().repaint();
-                    match.getListPlayersB().revalidate();
-
-                    //Indice per aggiornare i log del player
-                    indiceListPlayer = LogPlayer.getIndiceListPlayer(match.getModelListPlayerA(),inizioTurno);
-                    isSquadraA = true;
-                    if(indiceListPlayer == -1){
-
-                        isSquadraA = false;
-                        indiceListPlayer = LogPlayer.getIndiceListPlayer(match.getModelListPlayerB(),inizioTurno);
-                        logPlayersB[indiceListPlayer].incrementaNumeroPossesso();
-                    }
-                    if(isSquadraA)
-                        logPlayersA[indiceListPlayer].incrementaNumeroPossesso();
+                    jsonObject = null;
                 }
 
-                if(tipoMessaggio.equals("assegnazioneTurno")){
+                if(jsonObject != null)
+                    tipoEvento = jsonObject.getString("tipoEvento");
+                else tipoEvento = "null";
 
-                    String playerTurno = in.readLine();
+                String player;
+                String msg;
+                Font font;
 
-                    System.out.println(playerTurno);
+                switch (tipoEvento){
 
-                    //Aggiornamento log match
-                    logMatch = logMatch + "\nTurno " + turno  + " assegnato al player "  + playerTurno + "\n";
+                    case "annullamentoMatch":
 
-                    match.getCronaca().setText(""); //pulisci pane
-                    String msg = "Turno " + turno  + " assegnato al player "  + playerTurno + "\n\n";
-                    Font font = new Font("Verdana",Font.PLAIN,30);
-                    match.appendToPane(paneCronaca,msg, Color.GREEN, StyleConstants.ALIGN_CENTER,font);
+                        return new InfoFineMatch(null,null);
 
-                    turno++;
+                    case "inizioMatch":
 
-                    //Aggiorna graficamente il player corrente
-                    match.setPlayerAttualeRender(playerTurno);
-                    match.getListPlayersA().repaint();
-                    match.getListPlayersA().revalidate();
-                    match.getListPlayersB().repaint();
-                    match.getListPlayersB().revalidate();
+                        match.setAvvioPartita(true);
 
-                    //Indice per aggiornare i log del player
-                    indiceListPlayer = LogPlayer.getIndiceListPlayer(match.getModelListPlayerA(),playerTurno);
-                    isSquadraA = true;
-                    if(indiceListPlayer == -1){
+                        String inizioTurno = jsonObject.getString("playerInizioTurno");
 
-                        isSquadraA = false;
-                        indiceListPlayer = LogPlayer.getIndiceListPlayer(match.getModelListPlayerB(),playerTurno);
-                        logPlayersB[indiceListPlayer].incrementaNumeroPossesso();
-                    }
-                    if(isSquadraA)
-                        logPlayersA[indiceListPlayer].incrementaNumeroPossesso();
+                        System.out.println(inizioTurno);
 
-                }
+                        logMatch = logMatch + "Match avviato, 5 minuti alla fine\n\n";
 
-                if(tipoMessaggio.equals("evento")){
+                        msg = "Match avviato, 5 minuti alla fine\n\n";
+                        font = new Font("Verdana",Font.PLAIN,30);
+                        match.appendToPane(paneCronaca,msg,Color.BLACK,StyleConstants.ALIGN_CENTER,font);
+                        match.getTime().setText("5 min");
+                        try {
+                            Thread.sleep(4000); // Pausa per 4 secondi
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
 
-                    //Deserializzazione oggettoJSON
-                    StringBuilder jsonBuilder = new StringBuilder();
-                    oggettoEvento = in.readLine();
-                    jsonBuilder.append(oggettoEvento);
-                    String jsonResponse = jsonBuilder.toString();
-                    System.out.println("oggetto ricevuto: " + jsonResponse);
+                        //Aggiornamento log Match
+                        logMatch = logMatch + "Il primo turno è assegnato al player " + inizioTurno + "\n\n";
 
-                    JSONObject jsonObject = new JSONObject(jsonResponse.toString());
+                        msg = "Il primo turno è assegnato al player ";
+                        font = new Font("Verdana",Font.PLAIN,25);
+                        match.appendToPane(paneCronaca,msg, Color.BLACK, StyleConstants.ALIGN_CENTER,font);
+                        match.appendToPane(paneCronaca,inizioTurno+"\n\n",Color.GREEN, StyleConstants.ALIGN_CENTER,font);
 
-                    String tipoEvento = jsonObject.getString("tipoEvento");
-                    String player = jsonObject.getString("turnoPlayer");
+                        //Aggiorna graficamente il player corrente
+                        match.setPlayerAttualeRender(inizioTurno);
+                        match.getListPlayersA().repaint();
+                        match.getListPlayersA().revalidate();
+                        match.getListPlayersB().repaint();
+                        match.getListPlayersB().revalidate();
 
-                    switch (tipoEvento){
+                        //Indice per aggiornare i log del player
+                        indiceListPlayer = LogPlayer.getIndiceListPlayer(match.getModelListPlayerA(),inizioTurno);
+                        isSquadraA = true;
+                        if(indiceListPlayer == -1){
 
-                        case "tiro":
+                            isSquadraA = false;
+                            indiceListPlayer = LogPlayer.getIndiceListPlayer(match.getModelListPlayerB(),inizioTurno);
+                            logPlayersB[indiceListPlayer].incrementaNumeroPossesso();
+                        }
+                        if(isSquadraA)
+                            logPlayersA[indiceListPlayer].incrementaNumeroPossesso();
 
-                            String esitoTiro = jsonObject.getString("esitoTiro");
-                            int turnoSquadra = jsonObject.getInt("turnoSquadra");
+                        break;
+
+                    case "assegnazioneTurno":
+
+                        String playerTurno = jsonObject.getString("turnoPlayer");
+
+                        System.out.println(playerTurno);
+
+                        //Aggiornamento log match
+                        logMatch = logMatch + "\nTurno " + turno  + " assegnato al player "  + playerTurno + "\n";
+
+                        match.getCronaca().setText(""); //pulisci pane
+
+                        for(String playerRitornato : ritorniInfortunio){
+
+                            costruisciMessaggioDiRitorno(match,1,paneCronaca,playerRitornato);
+                        }
+                        ritorniInfortunio.clear();
+
+                        for(String playerRitornato : ritorniPenalizzazione){
+
+                            costruisciMessaggioDiRitorno(match,2,paneCronaca,playerRitornato);
+                        }
+                        ritorniPenalizzazione.clear();
+
+                        match.getCronaca().setText(""); //pulisci pane
+
+                        msg = "Turno " + turno  + " assegnato al player ";
+                        font = new Font("Verdana",Font.PLAIN,25);
+                        match.appendToPane(paneCronaca,msg, Color.BLACK, StyleConstants.ALIGN_CENTER,font);
+                        match.appendToPane(paneCronaca,playerTurno+"\n\n",Color.GREEN,StyleConstants.ALIGN_CENTER,font);
+
+                        turno++;
+
+                        //Aggiorna graficamente il player corrente
+                        match.setPlayerAttualeRender(playerTurno);
+                        match.getListPlayersA().repaint();
+                        match.getListPlayersA().revalidate();
+                        match.getListPlayersB().repaint();
+                        match.getListPlayersB().revalidate();
+
+                        //Indice per aggiornare i log del player
+                        indiceListPlayer = LogPlayer.getIndiceListPlayer(match.getModelListPlayerA(),playerTurno);
+                        isSquadraA = true;
+                        if(indiceListPlayer == -1){
+
+                            isSquadraA = false;
+                            indiceListPlayer = LogPlayer.getIndiceListPlayer(match.getModelListPlayerB(),playerTurno);
+                            logPlayersB[indiceListPlayer].incrementaNumeroPossesso();
+                        }
+                        if(isSquadraA)
+                            logPlayersA[indiceListPlayer].incrementaNumeroPossesso();
+
+                        break;
+
+                    case "tiro":
+
+                        String esitoTiro = jsonObject.getString("esitoTiro");
+                        int turnoSquadra = jsonObject.getInt("turnoSquadra");
+
+                        //Aggiornamento log match
+                        logMatch = logMatch + "Tenta il tiro\n";
+
+                        msg = "Tenta il tiro\n\n";
+                        font = new Font("Verdana",Font.PLAIN,20);
+                        match.appendToPane(paneCronaca,msg,Color.BLACK,StyleConstants.ALIGN_CENTER,font);
+                        try {
+                            Thread.sleep(3000); // Pausa per 3 secondi
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+
+                        //Aggiorna Log Tiri player
+                        if(isSquadraA)
+                            logPlayersA[indiceListPlayer].incrementaNumeroTiri();
+                        else
+                            logPlayersB[indiceListPlayer].incrementaNumeroTiri();
+
+                        if(!esitoTiro.equals("goal")){
 
                             //Aggiornamento log match
-                            logMatch = logMatch + "Tenta il tiro\n";
+                            logMatch = logMatch + "Il tiro non ha avuto successo\n";
 
-                            String msg = "Tenta il tiro\n\n";
-                            Font font = new Font("Verdana",Font.PLAIN,25);
-                            match.appendToPane(paneCronaca,msg,Color.BLACK,StyleConstants.ALIGN_CENTER,font);
-                            try {
-                                Thread.sleep(3000); // Pausa per 3 secondi
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
-
-                            //Aggiorna Log Tiri player
-                            if(isSquadraA)
-                                logPlayersA[indiceListPlayer].incrementaNumeroTiri();
-                            else
-                                logPlayersB[indiceListPlayer].incrementaNumeroTiri();
-
-                            if(!esitoTiro.equals("goal")){
-
-                                //Aggiornamento log match
-                                logMatch = logMatch + "Il tiro non ha avuto successo\n";
-
-                                msg = "Il tiro non ha avuto successo\n";
-                                font = new Font("Verdana",Font.PLAIN,25);
-                                match.appendToPane(paneCronaca,msg,Color.BLACK,StyleConstants.ALIGN_CENTER,font);
-                                try {
-                                    Thread.sleep(2000); // Pausa per 2 secondi
-                                } catch (InterruptedException e) {
-                                    e.printStackTrace();
-                                }
-
-                                //Aggiorna Log Tiri Falliti player
-                                if(isSquadraA)
-                                    logPlayersA[indiceListPlayer].incrementaNumeroTiriFalliti();
-                                else
-                                    logPlayersB[indiceListPlayer].incrementaNumeroTiriFalliti();
-
-                            }else {
-
-                               //aggiornamento log match
-                                logMatch = logMatch + "Ed è GOOOOOOAL!\n";
-
-                                msg = "GOOOOOOOOOOOOOOOOOAL\n";
-                                font = new Font("Verdana",Font.PLAIN,35);
-                                match.appendToPane(paneCronaca,msg,Color.RED,StyleConstants.ALIGN_CENTER,font);
-                                try {
-                                    Thread.sleep(2000); // Pausa per 2 secondi
-                                } catch (InterruptedException e) {
-                                    e.printStackTrace();
-                                }
-
-                                if(turnoSquadra == 0) match.incrementaScoreA();
-                                else match.incrementaScoreB();
-
-                                //Aggiorna Log Goal player
-                                if(isSquadraA)
-                                    logPlayersA[indiceListPlayer].incrementaNumeroGoal();
-                                else
-                                    logPlayersB[indiceListPlayer].incrementaNumeroGoal();
-                            }
-
-                            break;
-
-                        case "dribbling":
-
-                            String esitoDribbling = jsonObject.getString("esitoDribbling");
-
-                            //aggiormento log match
-                            logMatch = logMatch + "Tenta un dribbling\n";
-
-                            msg = "Tenta il dribbling\n\n";
-                            font = new Font("Verdana",Font.PLAIN,25);
-                            match.appendToPane(paneCronaca,msg,Color.BLACK,StyleConstants.ALIGN_CENTER,font);
-                            try {
-                                Thread.sleep(3000); // Pausa per 3 secondi
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
-
-                            //Aggiorna Log Dribbling player
-                            if(isSquadraA)
-                                logPlayersA[indiceListPlayer].incrementaNumeroDribbling();
-                            else
-                                logPlayersB[indiceListPlayer].incrementaNumeroDribbling();
-
-                            if(!esitoDribbling.equals("ok")){
-
-                                //aggironamento log match
-                                logMatch = logMatch + "Dribbling fallito, possesso palla perso\n";
-
-                                msg = "Dribbling fallito, possesso palla perso\n";
-                                font = new Font("Verdana",Font.PLAIN,30);
-                                match.appendToPane(paneCronaca,msg,Color.BLACK,StyleConstants.ALIGN_CENTER,font);
-                                try {
-                                    Thread.sleep(2000); // Pausa per 2 secondi
-                                } catch (InterruptedException e) {
-                                    e.printStackTrace();
-                                }
-
-                                //Aggiorna Log Dribbling Falliti player
-                                if(isSquadraA)
-                                    logPlayersA[indiceListPlayer].incrementaNumeroDribblingFallito();
-                                else
-                                    logPlayersB[indiceListPlayer].incrementaNumeroDribblingFallito();
-
-                            }else{
-
-                                //aggiornamento log match
-                                logMatch = logMatch + "Dribbling fatanstiscoo, ora ha spazio per tentare il tiro\n";
-
-                                msg = "Dribbling fatanstiscoo, ora ha spazio per tentare il tiro\n\n";
-                                font = new Font("Verdana",Font.PLAIN,30);
-                                match.appendToPane(paneCronaca,msg,Color.YELLOW,StyleConstants.ALIGN_CENTER,font);
-                                try {
-                                    Thread.sleep(2000); // Pausa per 2 secondi
-                                } catch (InterruptedException e) {
-                                    e.printStackTrace();
-                                }
-
-                                //Aggiorna Log Dribbling Successo player
-                                if(isSquadraA)
-                                    logPlayersA[indiceListPlayer].incrementaNumeroDribblingSuccesso();
-                                else
-                                    logPlayersB[indiceListPlayer].incrementaNumeroDribblingSuccesso();
-                            }
-
-                            break;
-
-                        case "infortunio":
-
-                            int minutiInfortunio = jsonObject.getInt("minuti");
-                            int minutiPlayerPenalizzato = jsonObject.getInt("minutiP");
-                            String playerPenalizzato = jsonObject.getString("playerPenalizzato");
-
-                            //aggiornamento logMatch
-                            logMatch = logMatch + "Fallo da parte del player " + playerPenalizzato + "\n";
-                            logMatch = logMatch + "Attenzione, il player ha subito un infortunio. Sarà indisponibile per " + minutiInfortunio + " minuti\n";
-                            logMatch = logMatch + "il player  " + playerPenalizzato + "è stato penalizzato per " + minutiPlayerPenalizzato + "\n";
-
-                            msg = "Attenzione, il player ha subito un infortunio per un fallo commesso da " + playerPenalizzato + " Sarà indisponibile per " + minutiInfortunio + " minuti\n\n";
+                            msg = "Il tiro non ha avuto successo\n";
                             font = new Font("Verdana",Font.PLAIN,20);
                             match.appendToPane(paneCronaca,msg,Color.BLACK,StyleConstants.ALIGN_CENTER,font);
-                            msg = "L'arbitro dà " + minutiPlayerPenalizzato + " minuti di penalizzazione al player " + playerPenalizzato + " per il fallo commesso\n";
-                            font = new Font("Verdana",Font.PLAIN,20);
-                            match.appendToPane(paneCronaca,msg,Color.BLACK,StyleConstants.ALIGN_CENTER,font);
-                            try {
-                                Thread.sleep(5000); // Pausa per 5 secondi
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
-
-                            match.addInfortunio(player);
-                            match.addInfortunio(playerPenalizzato);
-                            match.getListPlayersA().repaint();
-                            match.getListPlayersA().revalidate();
-                            match.getListPlayersB().repaint();
-                            match.getListPlayersB().revalidate();
-
-                            //Aggiorna Log minuti infortunio player
-                            if(isSquadraA)
-                                logPlayersA[indiceListPlayer].setMinutiInfortunati(minutiInfortunio);
-                            else
-                                logPlayersB[indiceListPlayer].setMinutiInfortunati(minutiInfortunio);
-
-                            break;
-
-                        case "ritornoInfortunio":
-
-                            //aggiornamento log match
-                            logMatch = logMatch + "Il player " + player + " torna ad essere disponibile\n";
-
-                            msg = "\nIl player " +  player + " torna ad essere disponibile\n";
                             try {
                                 Thread.sleep(2000); // Pausa per 2 secondi
                             } catch (InterruptedException e) {
                                 e.printStackTrace();
                             }
-                            font = new Font("Verdana",Font.PLAIN,20);
+
+                            //Aggiorna Log Tiri Falliti player
+                            if(isSquadraA)
+                                logPlayersA[indiceListPlayer].incrementaNumeroTiriFalliti();
+                            else
+                                logPlayersB[indiceListPlayer].incrementaNumeroTiriFalliti();
+
+                        }else {
+
+                           //aggiornamento log match
+                            logMatch = logMatch + "Ed è GOOOOOOAL!\n";
+
+                            msg = "GOOOOOOOOOOOOOOOOOAL\n";
+                            font = new Font("Verdana",Font.PLAIN,35);
+                            match.appendToPane(paneCronaca,msg,Color.RED,StyleConstants.ALIGN_CENTER,font);
+                            try {
+                                Thread.sleep(2000); // Pausa per 2 secondi
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+
+                            if(turnoSquadra == 0) match.incrementaScoreA();
+                            else match.incrementaScoreB();
+
+                            //Aggiorna Log Goal player
+                            if(isSquadraA)
+                                logPlayersA[indiceListPlayer].incrementaNumeroGoal();
+                            else
+                                logPlayersB[indiceListPlayer].incrementaNumeroGoal();
+                        }
+
+                        break;
+
+                    case "dribbling":
+
+                        String esitoDribbling = jsonObject.getString("esitoDribbling");
+
+                        //aggiormento log match
+                        logMatch = logMatch + "Tenta un dribbling\n";
+
+                        msg = "Tenta il dribbling\n\n";
+                        font = new Font("Verdana",Font.PLAIN,20);
+                        match.appendToPane(paneCronaca,msg,Color.BLACK,StyleConstants.ALIGN_CENTER,font);
+                        try {
+                            Thread.sleep(3000); // Pausa per 3 secondi
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+
+                        //Aggiorna Log Dribbling player
+                        if(isSquadraA)
+                            logPlayersA[indiceListPlayer].incrementaNumeroDribbling();
+                        else
+                            logPlayersB[indiceListPlayer].incrementaNumeroDribbling();
+
+                        if(!esitoDribbling.equals("ok")){
+
+                            //aggironamento log match
+                            logMatch = logMatch + "Dribbling fallito, possesso palla perso\n";
+
+                            msg = "Dribbling fallito, possesso palla perso\n";
+                            font = new Font("Verdana",Font.PLAIN,25);
                             match.appendToPane(paneCronaca,msg,Color.BLACK,StyleConstants.ALIGN_CENTER,font);
-                            match.removeInfortunio(player);
-                            match.getListPlayersA().repaint();
-                            match.getListPlayersA().revalidate();
-                            match.getListPlayersB().repaint();
-                            match.getListPlayersB().revalidate();
+                            try {
+                                Thread.sleep(2000); // Pausa per 2 secondi
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
 
-                            break;
-                    }
-                }
+                            //Aggiorna Log Dribbling Falliti player
+                            if(isSquadraA)
+                                logPlayersA[indiceListPlayer].incrementaNumeroDribblingFallito();
+                            else
+                                logPlayersB[indiceListPlayer].incrementaNumeroDribblingFallito();
 
-                if(tipoMessaggio.equals("ritornoPenalizzazione")){
+                        }else{
 
-                    String msg;
-                    String player = in.readLine();
-                    Font font;
+                            //aggiornamento log match
+                            logMatch = logMatch + "Dribbling fatanstiscoo, ora ha spazio per tentare il tiro\n";
 
-                    //aggiornamento log match
-                    logMatch = logMatch + "Il player " + player + " torna ad essere disponibile\n";
+                            msg = "Dribbling fatanstiscoo, ora ha spazio per tentare il tiro\n\n";
+                            font = new Font("Verdana",Font.PLAIN,25);
+                            match.appendToPane(paneCronaca,msg,Color.YELLOW,StyleConstants.ALIGN_CENTER,font);
+                            try {
+                                Thread.sleep(2000); // Pausa per 2 secondi
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
 
-                    msg = "\nIl player " +  player + " ha scontato la penalizzazione\n";
-                    font = new Font("Verdana",Font.PLAIN,20);
-                    match.appendToPane(paneCronaca,msg,Color.BLACK,StyleConstants.ALIGN_CENTER,font);
-                    try {
-                        Thread.sleep(2000); // Pausa per 2 secondi
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
+                            //Aggiorna Log Dribbling Successo player
+                            if(isSquadraA)
+                                logPlayersA[indiceListPlayer].incrementaNumeroDribblingSuccesso();
+                            else
+                                logPlayersB[indiceListPlayer].incrementaNumeroDribblingSuccesso();
+                        }
 
+                        break;
 
-                    match.removeInfortunio(player);
-                    match.getListPlayersA().repaint();
-                    match.getListPlayersA().revalidate();
-                    match.getListPlayersB().repaint();
-                    match.getListPlayersB().revalidate();
-                }
+                    case "infortunio":
 
-                if(tipoMessaggio.equals("refreshTime")){
+                        int minutiInfortunio = jsonObject.getInt("minuti");
+                        int minutiPlayerPenalizzato = jsonObject.getInt("minutiP");
+                        String playerPenalizzato = jsonObject.getString("playerPenalizzato");
+                        player = jsonObject.getString("turnoPlayer");
 
-                    String nuovoTime = in.readLine();
+                        //aggiornamento logMatch
+                        logMatch = logMatch + "Fallo da parte del player " + playerPenalizzato + "\n";
+                        logMatch = logMatch + "Attenzione, il player ha subito un infortunio. Sarà indisponibile per " + minutiInfortunio + " minuti\n";
+                        logMatch = logMatch + "il player  " + playerPenalizzato + "è stato penalizzato per " + minutiPlayerPenalizzato + "\n";
 
-                    System.out.println(nuovoTime);
+                        msg = "Attenzione, il player ha subito un ";
+                        font = new Font("Verdana",Font.PLAIN,20);
+                        match.appendToPane(paneCronaca,msg,Color.BLACK,StyleConstants.ALIGN_CENTER,font);
+                        match.appendToPane(paneCronaca,"infortunio ",Color.RED,StyleConstants.ALIGN_CENTER,font);
+                        msg = "per un fallo commesso da ";
+                        match.appendToPane(paneCronaca,msg,Color.BLACK,StyleConstants.ALIGN_CENTER,font);
+                        match.appendToPane(paneCronaca,playerPenalizzato,Color.RED,StyleConstants.ALIGN_CENTER,font);
+                        msg = " Sarà indisponibile per ";
+                        match.appendToPane(paneCronaca,msg,Color.BLACK,StyleConstants.ALIGN_CENTER,font);
+                        msg = minutiInfortunio + " minuti\n\n";
+                        match.appendToPane(paneCronaca,msg,Color.RED,StyleConstants.ALIGN_CENTER,font);
+                        font = new Font("Verdana",Font.PLAIN,20);
+                        match.appendToPane(paneCronaca,"L'arbitro dà ",Color.BLACK,StyleConstants.ALIGN_CENTER,font);
+                        match.appendToPane(paneCronaca,String.valueOf(minutiPlayerPenalizzato),Color.RED,StyleConstants.ALIGN_CENTER,font);
+                        msg = " minuti di penalizzazione al player ";
+                        match.appendToPane(paneCronaca,msg,Color.BLACK,StyleConstants.ALIGN_CENTER,font);
+                        match.appendToPane(paneCronaca,playerPenalizzato,Color.RED,StyleConstants.ALIGN_CENTER,font);
+                        match.appendToPane(paneCronaca," per il fallo commesso\n",Color.BLACK,StyleConstants.ALIGN_CENTER,font);
 
-                    switch (nuovoTime){
+                        try {
+                            Thread.sleep(6000); // Pausa per 6 secondi
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
 
-                        case "4m":
+                        match.addInfortunio(player);
+                        match.addPenalizzazione(playerPenalizzato);
+                        match.getListPlayersA().repaint();
+                        match.getListPlayersA().revalidate();
+                        match.getListPlayersB().repaint();
+                        match.getListPlayersB().revalidate();
+
+                        //Aggiorna Log minuti infortunio player
+                        if(isSquadraA)
+                            logPlayersA[indiceListPlayer].setMinutiInfortunati(minutiInfortunio);
+                        else
+                            logPlayersB[indiceListPlayer].setMinutiInfortunati(minutiInfortunio);
+
+                        break;
+
+                    case "ritornoInfortunio":
+
+                        player = jsonObject.getString("turnoPlayer");
+                        //aggiornamento log match
+                        logMatch = logMatch + "Il player " + player + " torna dall'infortunio\n";
+
+                        /*font = new Font("Verdana",Font.PLAIN,20);
+                        match.appendToPane(paneCronaca,"\n Il player ",Color.BLACK,StyleConstants.ALIGN_CENTER,font);
+                        match.appendToPane(paneCronaca,player,Color.RED,StyleConstants.ALIGN_CENTER,font);
+                        msg = " torna ad essere disponibile\n";
+                        match.appendToPane(paneCronaca,msg,Color.RED,StyleConstants.ALIGN_CENTER,font);
+
+                        try {
+                            Thread.sleep(2000); // Pausa per 2 secondi
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }*/
+
+                        ritorniInfortunio.add(player);
+
+                        match.removeInfortunio(player);
+                        match.getListPlayersA().repaint();
+                        match.getListPlayersA().revalidate();
+                        match.getListPlayersB().repaint();
+                        match.getListPlayersB().revalidate();
+
+                        break;
+
+                    case "ritornoPenalizzazione":
+
+                        player = jsonObject.getString("playerRitornato");
+
+                        //aggiornamento log match
+                        logMatch = logMatch + "Il player " + player + " torna ad essere disponibile\n";
+
+                        /*font = new Font("Verdana",Font.PLAIN,20);
+                        match.appendToPane(paneCronaca,"\n Il player ",Color.BLACK,StyleConstants.ALIGN_CENTER,font);
+                        match.appendToPane(paneCronaca,player,Color.RED,StyleConstants.ALIGN_CENTER,font);
+                        msg = " ha scontato la penalizzazione\n";
+                        match.appendToPane(paneCronaca,msg,Color.BLACK,StyleConstants.ALIGN_CENTER,font);
+
+                        try {
+                            Thread.sleep(2000); // Pausa per 2 secondi
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }*/
+
+                        ritorniPenalizzazione.add(player);
+
+                        match.removePenalizzazione(player);
+                        match.getListPlayersA().repaint();
+                        match.getListPlayersA().revalidate();
+                        match.getListPlayersB().repaint();
+                        match.getListPlayersB().revalidate();
+
+                        break;
+
+                    case "refreshTime":
+
+                        String nuovoTime = jsonObject.getString("countDown");
+                        System.out.println(nuovoTime);
+
+                        if(nuovoTime.equals("4m")){
+
                             match.getTime().setText("4 min");
                             match.getTime().setForeground(Color.red);
                             try {
@@ -743,9 +804,9 @@ public class ConnessioneServerSocket {
                                 e.printStackTrace();
                             }
                             match.getTime().setForeground(Color.WHITE);
-                            break;
 
-                        case "3m":
+                        }else if(nuovoTime.equals("3m")){
+
                             match.getTime().setText("3 min");
                             match.getTime().setForeground(Color.red);
                             try {
@@ -754,79 +815,110 @@ public class ConnessioneServerSocket {
                                 e.printStackTrace();
                             }
                             match.getTime().setForeground(Color.WHITE);
-                            break;
 
-                        case "2m":
+                        }else if(nuovoTime.equals("2m")){
+
                             match.getTime().setText("2 min");
                             match.getTime().setForeground(Color.red);
                             try {
-                                Thread.sleep(3000); // Pausa per 4 secondi (2000 millisecondi)
+                                Thread.sleep(3000); // Pausa per 3 secondi (2000 millisecondi)
                             } catch (InterruptedException e) {
                                 e.printStackTrace();
                             }
                             match.getTime().setForeground(Color.WHITE);
-                            break;
+                        }else {
 
-                        case "1m":
                             match.getTime().setText("1 min");
                             match.getTime().setForeground(Color.red);
                             try {
-                                Thread.sleep(3000); // Pausa per 4 secondi (2000 millisecondi)
+                                Thread.sleep(3000); // Pausa per 3 secondi (3000 millisecondi)
                             } catch (InterruptedException e) {
                                 e.printStackTrace();
                             }
-                            break;
-                    }
+                        }
+
+                        break;
+
+                    case "fineMatch":
+
+                        match.getCronaca().setText(""); //pulisci pane
+                        msg = "MATCH CONCLUSO\n";
+                        font = new Font("Verdana",Font.PLAIN,30);
+                        match.appendToPane(paneCronaca,msg, Color.BLACK, StyleConstants.ALIGN_CENTER,font);
+
+                        String logStatistiche = new String("");
+
+                        logStatistiche = logStatistiche + "--------------------" + infoMatch.getSquadraA() + "--------------------\n";
+
+                        for(LogPlayer logPlayer : logPlayersA){
+
+                            logStatistiche = logStatistiche + "PLAYER: " + logPlayer.getPlayer() + "\n";
+                            logStatistiche = logStatistiche + "NUMERO DI TURNI GIOCATI: " + logPlayer.getNumeroDiPossesso() + "\n";
+                            logStatistiche = logStatistiche + "NUMERO TIRI: " + logPlayer.getNumeroTiri() + "\n";
+                            logStatistiche = logStatistiche + "TIRI FALLITI: " + logPlayer.getNumeroTiriFalliti() + "\n";
+                            logStatistiche = logStatistiche + "GOAL: " + logPlayer.getNumeroGoal() + "\n";
+                            logStatistiche = logStatistiche + "TENTATIVI DRIBBLING: " + logPlayer.getNumeroDribbling() + "\n";
+                            logStatistiche = logStatistiche + "DRIBBLING RIUSCITI: " + logPlayer.getNumeroDribblingSuccesso() + "\n";
+                            logStatistiche = logStatistiche + "DRIBBLING FALLITI: " + logPlayer.getNumeroDribblingFalliti() + "\n";
+                            logStatistiche = logStatistiche + "MINUTI INFORTUNATI: " + logPlayer.getMinutiInfortunati() + "\n";
+
+                            logStatistiche = logStatistiche + "--------------------\n";
+                        }
+
+                        logStatistiche = logStatistiche + "--------------------" + infoMatch.getSquadraB() + "--------------------\n";
+
+                        for(LogPlayer logPlayer : logPlayersB){
+
+                            logStatistiche = logStatistiche + "PLAYER: " + logPlayer.getPlayer() + "\n";
+                            logStatistiche = logStatistiche + "NUMERO DI TURNI GIOCATI: " + logPlayer.getNumeroDiPossesso() + "\n";
+                            logStatistiche = logStatistiche + "NUMERO TIRI: " + logPlayer.getNumeroTiri() + "\n";
+                            logStatistiche = logStatistiche + "TIRI FALLITI: " + logPlayer.getNumeroTiriFalliti() + "\n";
+                            logStatistiche = logStatistiche + "GOAL: " + logPlayer.getNumeroGoal() + "\n";
+                            logStatistiche = logStatistiche + "TENTATIVI DRIBBLING: " + logPlayer.getNumeroDribbling() + "\n";
+                            logStatistiche = logStatistiche + "DRIBBLING RIUSCITI: " + logPlayer.getNumeroDribblingSuccesso() + "\n";
+                            logStatistiche = logStatistiche + "DRIBBLING FALLITI: " + logPlayer.getNumeroDribblingFalliti() + "\n";
+                            logStatistiche = logStatistiche + "MINUTI INFORTUNATI: " + logPlayer.getMinutiInfortunati() + "\n";
+
+                            logStatistiche = logStatistiche + "--------------------\n";
+
+                            infoFineMatch = new InfoFineMatch(logMatch,logStatistiche);
+
+                        }
+
+                        return infoFineMatch;
                 }
+            }
+        }
+    }
 
-                if(tipoMessaggio.equals("fineMatch")){
+    private void costruisciMessaggioDiRitorno(SimulazioneMatch match, int tipoRitorno, JTextPane paneCronaca, String player){
 
-                    match.getCronaca().setText(""); //pulisci pane
-                    String msg = "MATCH CONCLUSO\n";
-                    Font font = new Font("Verdana",Font.PLAIN,30);
-                    match.appendToPane(paneCronaca,msg, Color.BLACK, StyleConstants.ALIGN_CENTER,font);
+        if(tipoRitorno == 1){
 
-                    String logStatistiche = new String("");
+            Font font = new Font("Verdana",Font.PLAIN,20);
+            match.appendToPane(paneCronaca,"\n Il player ",Color.BLACK,StyleConstants.ALIGN_CENTER,font);
+            match.appendToPane(paneCronaca,player,Color.RED,StyleConstants.ALIGN_CENTER,font);
+            String msg = " torna ad essere disponibile\n";
+            match.appendToPane(paneCronaca,msg,Color.RED,StyleConstants.ALIGN_CENTER,font);
 
-                    logStatistiche = logStatistiche + "--------------------" + infoMatch.getSquadraA() + "--------------------\n";
+            try {
+                Thread.sleep(3000); // Pausa per 3 secondi
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
 
-                    for(LogPlayer logPlayer : logPlayersA){
+        }else{
 
-                        logStatistiche = logStatistiche + "PLAYER: " + logPlayer.getPlayer() + "\n";
-                        logStatistiche = logStatistiche + "NUMERO DI TURNI GIOCATI: " + logPlayer.getNumeroDiPossesso() + "\n";
-                        logStatistiche = logStatistiche + "NUMERO TIRI: " + logPlayer.getNumeroTiri() + "\n";
-                        logStatistiche = logStatistiche + "TIRI FALLITI: " + logPlayer.getNumeroTiriFalliti() + "\n";
-                        logStatistiche = logStatistiche + "GOAL: " + logPlayer.getNumeroGoal() + "\n";
-                        logStatistiche = logStatistiche + "TENTATIVI DRIBBLING: " + logPlayer.getNumeroDribbling() + "\n";
-                        logStatistiche = logStatistiche + "DRIBBLING RIUSCITI: " + logPlayer.getNumeroDribblingSuccesso() + "\n";
-                        logStatistiche = logStatistiche + "DRIBBLING FALLITI: " + logPlayer.getNumeroDribblingFalliti() + "\n";
-                        logStatistiche = logStatistiche + "MINUTI INFORTUNATI: " + logPlayer.getMinutiInfortunati() + "\n";
+            Font font = new Font("Verdana",Font.PLAIN,20);
+            match.appendToPane(paneCronaca,"\n Il player ",Color.BLACK,StyleConstants.ALIGN_CENTER,font);
+            match.appendToPane(paneCronaca,player,Color.RED,StyleConstants.ALIGN_CENTER,font);
+            String msg = " ha scontato la penalizzazione\n";
+            match.appendToPane(paneCronaca,msg,Color.BLACK,StyleConstants.ALIGN_CENTER,font);
 
-                        logStatistiche = logStatistiche + "--------------------\n";
-                    }
-
-                    logStatistiche = logStatistiche + "--------------------" + infoMatch.getSquadraB() + "--------------------\n";
-
-                    for(LogPlayer logPlayer : logPlayersB){
-
-                        logStatistiche = logStatistiche + "PLAYER: " + logPlayer.getPlayer() + "\n";
-                        logStatistiche = logStatistiche + "NUMERO DI TURNI GIOCATI: " + logPlayer.getNumeroDiPossesso() + "\n";
-                        logStatistiche = logStatistiche + "NUMERO TIRI: " + logPlayer.getNumeroTiri() + "\n";
-                        logStatistiche = logStatistiche + "TIRI FALLITI: " + logPlayer.getNumeroTiriFalliti() + "\n";
-                        logStatistiche = logStatistiche + "GOAL: " + logPlayer.getNumeroGoal() + "\n";
-                        logStatistiche = logStatistiche + "TENTATIVI DRIBBLING: " + logPlayer.getNumeroDribbling() + "\n";
-                        logStatistiche = logStatistiche + "DRIBBLING RIUSCITI: " + logPlayer.getNumeroDribblingSuccesso() + "\n";
-                        logStatistiche = logStatistiche + "DRIBBLING FALLITI: " + logPlayer.getNumeroDribblingFalliti() + "\n";
-                        logStatistiche = logStatistiche + "MINUTI INFORTUNATI: " + logPlayer.getMinutiInfortunati() + "\n";
-
-                        logStatistiche = logStatistiche + "--------------------\n";
-
-                        infoFineMatch = new InfoFineMatch(logMatch,logStatistiche);
-
-                    }
-
-                    return infoFineMatch;
-                }
+            try {
+                Thread.sleep(3000); // Pausa per 3 secondi
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
         }
     }

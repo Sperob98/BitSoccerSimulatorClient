@@ -16,7 +16,7 @@ public class Main {
         Thread tentativoDiConnessione = new Thread( ()->{
 
             try{
-                server.startConnection("192.168.247.160",8080);
+                server.startConnection("192.168.1.98",8080);
 
             }catch (IOException ex){
                 JOptionPane.showMessageDialog(null,"Connessione al server fallita", "Errore", JOptionPane.ERROR_MESSAGE);
@@ -63,10 +63,11 @@ public class Main {
             // Verifica che l'input non sia composto solo da numeri
             if (input.matches(".*[a-zA-Z]+.*")) {
                 // L'input contiene almeno una lettera, è valido
-                isValid = true;
+                if(input.length()<=120)
+                    isValid = true;
             } else {
                 // L'input contiene solo numeri
-                JOptionPane.showMessageDialog(null, "L'input non può essere composto solo da numeri. Riprova.");
+                JOptionPane.showMessageDialog(null, "L'input non può essere composto solo da numeri e non può essere più lungo di 120 caratteri. Riprova.");
             }
 
             if(isValid) {
@@ -74,7 +75,7 @@ public class Main {
                 //Controlla unicità username
                 String respose = "ko";
                 try {
-                    respose = server.sendUsernamePlayer(input.toLowerCase());
+                    respose = server.sendUsernamePlayer(input.toLowerCase()+'\0');
                 } catch (IOException ex) {
                     System.out.println("Errore invio username");
                 }

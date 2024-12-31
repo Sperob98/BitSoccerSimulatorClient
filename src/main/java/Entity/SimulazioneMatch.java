@@ -127,6 +127,20 @@ public class SimulazioneMatch {
         renderListB.removePlayerInfortunato(player);
     }
 
+    public void addPenalizzazione(String player){
+
+        renderListA.addPlayerPenalizzato(player);
+
+        renderListB.addPlayerPenalizzato(player);
+    }
+
+    public void removePenalizzazione(String player){
+
+        renderListA.removePlayerPenalizzato(player);
+
+        renderListB.removePlayerPenalizzato(player);
+    }
+
     public void incrementaScoreA(){
 
         countA++;

@@ -32,12 +32,14 @@ public class RenderListPartita extends JLabel implements ListCellRenderer<String
         if ( (value.equals(turnoPlayer)) || (value.equals(turnoPlayer + (" (capitano)"))) ) {
             setBackground(Color.GREEN);  // Colore di sfondo per il giocatore di turno
             setForeground(Color.BLACK);   // Colore del testo per il giocatore di turno
-        } else if( (value.equals(playerClient)) || (value.equals(playerClient + " (capitano)")) ) {
-            setBackground(Color.gray);   // Colore di sfondo del player client
-            setForeground(Color.BLACK);   // Colore del testo player client
         } else{
             setBackground(Color.WHITE);   // Colore di sfondo normale
             setForeground(Color.BLACK);   // Colore del testo normale
+        }
+
+        if( (playersPenalizzato.contains(value)) || (contieneCapitano(playersPenalizzato,value)) ){
+            setBackground(Color.YELLOW);   // Colore di sfondo del player penalizzato
+            setForeground(Color.BLACK);   // Colore del testo player penalizzato
         }
 
         if( (playersInfortunato.contains(value)) || (contieneCapitano(playersInfortunato,value)) ){

@@ -28,6 +28,7 @@ public class Partita extends JFrame {
         setLocationRelativeTo(null);
         setResizable(false);
         setLayout(new BorderLayout());
+        setTitle("PARTITA: " + player);
 
         ImageIcon sfondoIcon = new ImageIcon(getClass().getResource("/sfondoCampo2.jpg"));
         Image sfondoImage = sfondoIcon.getImage();
@@ -263,41 +264,42 @@ public class Partita extends JFrame {
         panelMappaColori.add(rigaColore3);
 
         JLabel colore1 = new JLabel();
-        colore1.setBackground(Color.DARK_GRAY);
-        colore1.setBorder(BorderFactory.createLineBorder(Color.DARK_GRAY,2));
+        colore1.setBackground(Color.GREEN);
+        colore1.setBorder(BorderFactory.createLineBorder(Color.GREEN));
         colore1.setMinimumSize(new Dimension(10,10));
         colore1.setMaximumSize(new Dimension(10,10));
         colore1.setPreferredSize(new Dimension(10,10));
-        JLabel ioLabel = new JLabel("io");
+        JLabel ioLabel = new JLabel("Player di turno");
         ioLabel.setFont(new Font("Arial", Font.BOLD, 14));
-        ioLabel.setForeground(Color.darkGray);
+        ioLabel.setForeground(Color.GREEN);
         colore1.setOpaque(true);
         rigaColore1.add(colore1);
         rigaColore1.add(ioLabel);
 
         JLabel colore2 = new JLabel();
-        colore2.setBackground(Color.GREEN);
-        colore2.setBorder(BorderFactory.createLineBorder(Color.GREEN,2));
+        colore2.setBackground(Color.RED);
+        colore2.setForeground(Color.RED);
+        colore2.setBorder(BorderFactory.createLineBorder(Color.RED,2));
         colore2.setMinimumSize(new Dimension(10,10));
         colore2.setMaximumSize(new Dimension(10,10));
         colore2.setPreferredSize(new Dimension(10,10));
-        JLabel turnoLabel = new JLabel("Player di turno");
+        JLabel turnoLabel = new JLabel("Player infortunato");
         turnoLabel.setFont(new Font("Arial", Font.PLAIN, 14));
-        turnoLabel.setForeground(Color.GREEN);
+        turnoLabel.setForeground(Color.RED);
         colore2.setOpaque(true);
         rigaColore2.add(colore2);
         rigaColore2.add(turnoLabel);
 
         JLabel colore3 = new JLabel();
-        colore3.setBackground(Color.RED);
-        colore3.setBorder(BorderFactory.createLineBorder(Color.RED,2));
+        colore3.setBackground(Color.YELLOW);
+        colore3.setBorder(BorderFactory.createLineBorder(Color.YELLOW,2));
         colore3.setMinimumSize(new Dimension(10,10));
         colore3.setMaximumSize(new Dimension(10,10));
         colore3.setPreferredSize(new Dimension(10,10));
         colore3.setOpaque(true);
-        JLabel infortunatoPlayer = new JLabel("Player infortunato/penalizzato");
+        JLabel infortunatoPlayer = new JLabel("Player penalizzato");
         infortunatoPlayer.setFont(new Font("Arial", Font.PLAIN, 14));
-        infortunatoPlayer.setForeground(Color.RED);
+        infortunatoPlayer.setForeground(Color.YELLOW);
         rigaColore3.add(colore3);
         rigaColore3.add(infortunatoPlayer);
 
@@ -326,6 +328,13 @@ public class Partita extends JFrame {
 
             try {
                 InfoFineMatch infoFineMatch = server.threadAscoltoPartita(match,infoMatch);
+
+                if(infoFineMatch.getLogMatch() == null || infoFineMatch.getLogStatistiche() == null){
+
+                    JOptionPane.showMessageDialog(null, "match annullato per disconessione di alcuni players!");
+                    new Home(server,player);
+                    dispose();
+                }
 
                 buttonFileLogMatch.setEnabled(true);
                 buttonFileLogPlayer.setEnabled(true);
